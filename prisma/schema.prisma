@@ -28,6 +28,8 @@ model User {
 
   role Role @relation(fields: [roleId], references: [id])
 
+  userAdresses UserAdresses[]
+
   @@map("users")
 }
 
@@ -69,4 +71,21 @@ model RolePermission {
 
   @@unique([roleId, permissionId])
   @@map("role_permissions")
+}
+
+model UserAdresses {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  address   String
+  tag       String?
+  latitude  Float?
+  longitude Float?
+  label     String?
+  photo     String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_adresses")
 }
