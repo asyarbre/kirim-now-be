@@ -103,3 +103,14 @@ model Shipment {
 
   @@map("shipments")
 }
+
+model Branch {
+  id          String   @id @default(cuid())
+  name        String
+  address     String
+  phoneNumber String @map("phone_number")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  @@map("branches")
+}
