@@ -32,6 +32,7 @@ model User {
   shipmentBranchLog ShipmentBranchLog[]
   shipmentDetail    ShipmentDetail[]
   shipmentHistory   ShipmentHistory[]
+  employeeBranch    EmployeeBranch[]
 
   @@map("users")
 }
@@ -122,8 +123,22 @@ model Branch {
   updatedAt         DateTime            @default(now()) @map("updated_at")
   shipmentBranchLog ShipmentBranchLog[]
   shipmentHistory   ShipmentHistory[]
+  employeeBranch    EmployeeBranch[]
 
   @@map("branches")
+}
+
+model EmployeeBranch {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  branchId  String   @map("branch_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @map("updated_at")
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@map("employee_branches")
 }
 
 model Payment {
