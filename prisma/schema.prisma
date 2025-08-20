@@ -101,6 +101,8 @@ model Shipment {
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @default(now()) @map("updated_at")
 
+  payment Payment[]
+
   @@map("shipments")
 }
 
@@ -108,9 +110,26 @@ model Branch {
   id          String   @id @default(cuid())
   name        String
   address     String
-  phoneNumber String @map("phone_number")
+  phoneNumber String   @map("phone_number")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @default(now()) @map("updated_at")
 
   @@map("branches")
+}
+
+model Payment {
+  id             String    @id @default(cuid())
+  shipmentId     String    @map("shipment_id")
+  paymentMethod  String?   @map("payment_method")
+  status         String?
+  expirationDate DateTime? @map("expiration_date")
+  externalId     String?   @map("external_id")
+  invoiceId      String?   @map("invoice_id")
+  invoiceUrl     String?   @map("invoice_url")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @map("updated_at")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+
+  @@map("payments")
 }
