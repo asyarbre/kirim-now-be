@@ -28,8 +28,9 @@ model User {
 
   role Role @relation(fields: [roleId], references: [id])
 
-  userAdresses      UserAdresses[]
+  userAddresses     UserAddresses[]
   shipmentBranchLog ShipmentBranchLog[]
+  ShipmentDetail    ShipmentDetail[]
 
   @@map("users")
 }
@@ -74,7 +75,7 @@ model RolePermission {
   @@map("role_permissions")
 }
 
-model UserAdresses {
+model UserAddresses {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
   address   String
@@ -86,7 +87,8 @@ model UserAdresses {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ShipmentDetail ShipmentDetail[]
 
   @@map("user_adresses")
 }
@@ -104,6 +106,7 @@ model Shipment {
 
   payment           Payment[]
   shipmentBranchLog ShipmentBranchLog[]
+  ShipmentDetail    ShipmentDetail[]
 
   @@map("shipments")
 }
@@ -155,4 +158,32 @@ model ShipmentBranchLog {
   scannedByUser User     @relation(fields: [scannedByUserId], references: [id], onDelete: Cascade)
 
   @@map("shipment_branch_logs")
+}
+
+model ShipmentDetail {
+  id                   String   @id @default(cuid())
+  shipmentId           String   @map("shipment_id")
+  userId               String   @map("user_id")
+  pickupAddressId      String   @map("pickup_address_id")
+  weight               Float?
+  deliveryType         String   @map("delivery_type")
+  destinationAddress   String   @map("destination_address")
+  packageType          String   @map("package_type")
+  pickupProof          String?  @map("pickup_proof")
+  receiptProof         String?  @map("receipt_proof")
+  destinationLatitude  Float?   @map("destination_latitude")
+  destinationLongitude Float?   @map("destination_longitude")
+  recipientName        String?  @map("recipient_name")
+  recipientPhone       String?  @map("recipient_phone")
+  basePrice            Float?   @map("base_price")
+  distancePrice        Float?   @map("distance_price")
+  weightPrice          Float?   @map("weight_price")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @default(now()) @map("updated_at")
+
+  shipment      Shipment      @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pickupAddress UserAddresses @relation(fields: [pickupAddressId], references: [id], onDelete: Cascade)
+
+  @@map("shipment_details")
 }
