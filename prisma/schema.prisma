@@ -30,7 +30,8 @@ model User {
 
   userAddresses     UserAddresses[]
   shipmentBranchLog ShipmentBranchLog[]
-  ShipmentDetail    ShipmentDetail[]
+  shipmentDetail    ShipmentDetail[]
+  shipmentHistory   ShipmentHistory[]
 
   @@map("users")
 }
@@ -88,7 +89,7 @@ model UserAddresses {
   updatedAt DateTime @default(now()) @map("updated_at")
 
   user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ShipmentDetail ShipmentDetail[]
+  shipmentDetail ShipmentDetail[]
 
   @@map("user_adresses")
 }
@@ -106,7 +107,8 @@ model Shipment {
 
   payment           Payment[]
   shipmentBranchLog ShipmentBranchLog[]
-  ShipmentDetail    ShipmentDetail[]
+  shipmentDetail    ShipmentDetail[]
+  shipmentHistory   ShipmentHistory[]
 
   @@map("shipments")
 }
@@ -118,7 +120,8 @@ model Branch {
   phoneNumber       String              @map("phone_number")
   createdAt         DateTime            @default(now()) @map("created_at")
   updatedAt         DateTime            @default(now()) @map("updated_at")
-  ShipmentBranchLog ShipmentBranchLog[]
+  shipmentBranchLog ShipmentBranchLog[]
+  shipmentHistory   ShipmentHistory[]
 
   @@map("branches")
 }
@@ -186,4 +189,21 @@ model ShipmentDetail {
   pickupAddress UserAddresses @relation(fields: [pickupAddressId], references: [id], onDelete: Cascade)
 
   @@map("shipment_details")
+}
+
+model ShipmentHistory {
+  id          String   @id @default(cuid())
+  shipmentId  String   @map("shipment_id")
+  branchId    String   @map("branch_id")
+  userId      String   @map("user_id")
+  status      String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @map("updated_at")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id], onDelete: Cascade)
+  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("shipment_histories")
 }
