@@ -132,6 +132,7 @@ model EmployeeBranch {
   id        String   @id @default(cuid())
   userId    String   @map("user_id")
   branchId  String   @map("branch_id")
+  type      String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @map("updated_at")
 
