@@ -89,3 +89,17 @@ model UserAdresses {
 
   @@map("user_adresses")
 }
+
+model Shipment {
+  id             String   @id @default(cuid())
+  paymentStatus  String   @map("payment_status")
+  deliveryStatus String?  @map("delivery_status")
+  trackingNumber String?  @map("tracking_number")
+  price          Float?
+  distance       Float?
+  qrCodeImage    String?  @map("qr_code_image")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @map("updated_at")
+
+  @@map("shipments")
+}
