@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { RolesModule } from './roles/roles.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { ProfileModule } from './profile/profile.module';
+import { BranchesModule } from './branches/branches.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ProfileModule } from './profile/profile.module';
     RolesModule,
     PermissionsModule,
     ProfileModule,
+    BranchesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
