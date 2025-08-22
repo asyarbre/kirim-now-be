@@ -175,30 +175,13 @@ export class ProfileService {
 
     try {
       // Update user in database
-      const updatedUser = await this.prisma.user.update({
+      await this.prisma.user.update({
         where: { id },
         data: updateData,
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-          phoneNumber: true,
-          createdAt: true,
-          updatedAt: true,
-          role: {
-            select: {
-              id: true,
-              name: true,
-              key: true,
-            },
-          },
-        },
       });
 
       return {
         message: 'Profile updated successfully',
-        data: updatedUser,
       };
     } catch {
       throw new BadRequestException('Failed to update profile');
