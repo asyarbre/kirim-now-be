@@ -7,6 +7,7 @@ import { RolesModule } from './roles/roles.module';
 import { PermissionsModule } from './permissions/permissions.module';
 import { ProfileModule } from './profile/profile.module';
 import { BranchesModule } from './branches/branches.module';
+import { EmployeeBranchModule } from './employee-branch/employee-branch.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BranchesModule } from './branches/branches.module';
     PermissionsModule,
     ProfileModule,
     BranchesModule,
+    EmployeeBranchModule,
   ],
   controllers: [AppController],
   providers: [AppService],
