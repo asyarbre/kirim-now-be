@@ -8,6 +8,7 @@ import { PermissionsModule } from './permissions/permissions.module';
 import { ProfileModule } from './profile/profile.module';
 import { BranchesModule } from './branches/branches.module';
 import { EmployeeBranchModule } from './employee-branch/employee-branch.module';
+import { UserAddressModule } from './user-address/user-address.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { EmployeeBranchModule } from './employee-branch/employee-branch.module';
     ProfileModule,
     BranchesModule,
     EmployeeBranchModule,
+    UserAddressModule,
   ],
   controllers: [AppController],
   providers: [AppService],
