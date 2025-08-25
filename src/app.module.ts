@@ -10,6 +10,7 @@ import { BranchesModule } from './branches/branches.module';
 import { EmployeeBranchModule } from './employee-branch/employee-branch.module';
 import { UserAddressModule } from './user-address/user-address.module';
 import { EmailService } from 'src/common/email/email.service';
+import { QueueModule } from 'src/queue/queue.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { EmailService } from 'src/common/email/email.service';
     BranchesModule,
     EmployeeBranchModule,
     UserAddressModule,
+    QueueModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService],
