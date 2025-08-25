@@ -1,0 +1,256 @@
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { OpencageService } from 'src/common/opencage/opencage.service';
+import { XenditService } from 'src/common/xendit/xendit.service';
+import { PrismaService } from 'src/prisma/prisma.service';
+import { QueueService } from 'src/queue/queue.service';
+import { CreateShipmentDto } from 'src/shipments/dto/create-shipment.dto';
+import { UpdateShipmentDto } from 'src/shipments/dto/update-shipment.dto';
+import * as turf from '@turf/turf';
+import { PaymentStatus } from 'src/common/enum/payment-status.enum';
+import { ConfigService } from '@nestjs/config';
+
+type DeliveryType = 'same_day' | 'next_day' | 'reguler';
+
+interface CreateShipmentResponse {
+  shipment: any;
+  payment: any;
+  invoice: any;
+}
+
+@Injectable()
+export class ShipmentsService {
+  private readonly frontendUrl: string;
+
+  constructor(
+    private prisma: PrismaService,
+    private queueSErvice: QueueService,
+    private openCageService: OpencageService,
+    private xenditService: XenditService,
+    private configService: ConfigService,
+  ) {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    if (!frontendUrl) {
+      throw new BadRequestException(
+        'FRONTEND_URL is not defined in configuration',
+      );
+    }
+    this.frontendUrl = frontendUrl;
+  }
+
+  async create(
+    createShipmentDto: CreateShipmentDto,
+  ): Promise<CreateShipmentResponse> {
+    const { lat, lng } = await this.openCageService.geocode(
+      createShipmentDto.destination_address,
+    );
+
+    const userAddress = await this.prisma.userAddresses.findFirst({
+      where: {
+        id: createShipmentDto.pickup_address_id,
+      },
+      include: {
+        user: true,
+      },
+    });
+
+    if (!userAddress || !userAddress.longitude || !userAddress.latitude) {
+      throw new NotFoundException('Pickup address not found');
+    }
+
+    const fromAddress = turf.point([lng, lat]);
+    const toAddress = turf.point([userAddress.longitude, userAddress.latitude]);
+    const options = { units: 'kilometers' as turf.Units };
+    const distance = turf.distance(fromAddress, toAddress, options);
+
+    const shipmentCost = this.calculateShipmentCost(
+      createShipmentDto.weight,
+      distance,
+      createShipmentDto.delivery_type as DeliveryType,
+    );
+
+    const shipment = await this.prisma.$transaction(async prisma => {
+      const newShipment = await prisma.shipment.create({
+        data: {
+          paymentStatus: PaymentStatus.PENDING,
+          distance: distance,
+          price: shipmentCost.totalPrice,
+        },
+      });
+
+      await prisma.shipmentDetail.create({
+        data: {
+          userId: userAddress.userId,
+          shipmentId: newShipment.id,
+          pickupAddressId: createShipmentDto.pickup_address_id,
+          destinationAddress: createShipmentDto.destination_address,
+          recipientName: createShipmentDto.recipient_name,
+          recipientPhone: createShipmentDto.recipient_phone,
+          weight: createShipmentDto.weight,
+          packageType: createShipmentDto.package_type,
+          deliveryType: createShipmentDto.delivery_type as DeliveryType,
+          destinationLatitude: lat,
+          destinationLongitude: lng,
+          basePrice: shipmentCost.basePrice,
+          weightPrice: shipmentCost.weightPrice,
+          distancePrice: shipmentCost.distancePrice,
+        },
+      });
+
+      return newShipment;
+    });
+
+    const invoice = await this.xenditService.createInvoice({
+      externalId: `INV-${Date.now()}-${shipment.id}`,
+      amount: shipmentCost.totalPrice,
+      payerEmail: userAddress.user.email,
+      description: `Shipment #${shipment.id} from ${userAddress.address} to ${createShipmentDto.destination_address}`,
+      successRedirectUrl: `${this.frontendUrl}/shipments/${shipment.id}`,
+      invoiceDuration: 86400,
+    });
+
+    const payment = await this.prisma.$transaction(async prisma => {
+      const createPayment = await prisma.payment.create({
+        data: {
+          shipmentId: shipment.id,
+          externalId: invoice.externalId,
+          invoiceId: invoice.id,
+          status: invoice.status,
+          invoiceUrl: invoice.invoiceUrl,
+          expirationDate: invoice.expiryDate,
+        },
+      });
+
+      // Get first available branch or create a default one
+      const defaultBranch = await prisma.branch.findFirst();
+      if (!defaultBranch) {
+        throw new InternalServerErrorException(
+          'No branch available for shipment processing',
+        );
+      }
+
+      await prisma.shipmentHistory.create({
+        data: {
+          shipmentId: shipment.id,
+          branchId: defaultBranch.id,
+          userId: userAddress.userId,
+          status: PaymentStatus.PENDING,
+          description: `Shipment #${shipment.id} created with total price ${shipmentCost.totalPrice}`,
+        },
+      });
+
+      return createPayment;
+    });
+
+    try {
+      await this.queueSErvice.addEmailJob({
+        type: 'payment-notification',
+        to: userAddress.user.email,
+        shipmentId: shipment.id,
+        amount: shipmentCost.totalPrice,
+        paymentUrl: invoice.invoiceUrl,
+        expiryDate: invoice.expiryDate,
+      });
+    } catch {
+      throw new InternalServerErrorException(
+        'Failed to send payment notification',
+      );
+    }
+
+    return {
+      shipment,
+      payment,
+      invoice,
+    };
+  }
+
+  findAll() {
+    return `This action returns all shipments`;
+  }
+
+  findOne(id: number) {
+    return `This action returns a #${id} shipment`;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  update(id: number, updateShipmentDto: UpdateShipmentDto) {
+    return `This action updates a #${id} shipment`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} shipment`;
+  }
+
+  private calculateShipmentCost(
+    weight: number,
+    distance: number,
+    deliveryType: DeliveryType,
+  ): {
+    totalPrice: number;
+    basePrice: number;
+    weightPrice: number;
+    distancePrice: number;
+  } {
+    const baseRates: Record<DeliveryType, number> = {
+      same_day: 15000,
+      next_day: 10000,
+      reguler: 5000,
+    };
+
+    const weightRates: Record<DeliveryType, number> = {
+      same_day: 1000,
+      next_day: 500,
+      reguler: 250,
+    };
+
+    const distanceRates: Record<
+      DeliveryType,
+      { tier1: number; tier2: number; tier3: number }
+    > = {
+      same_day: {
+        tier1: 6000,
+        tier2: 10000,
+        tier3: 15000,
+      },
+      next_day: {
+        tier1: 4000,
+        tier2: 6000,
+        tier3: 10000,
+      },
+      reguler: {
+        tier1: 2000,
+        tier2: 4000,
+        tier3: 6000,
+      },
+    };
+
+    const basePrice = baseRates[deliveryType] || baseRates.reguler;
+    const weightRate = weightRates[deliveryType] || weightRates.reguler;
+    const distanceRate = distanceRates[deliveryType] || distanceRates.reguler;
+
+    const weightKg = Math.ceil(weight / 1000); // Convert weight to kg
+    const weightPrice = weightKg * weightRate;
+
+    let distancePrice = 0;
+    if (distance <= 50) {
+      distancePrice = distanceRate.tier1;
+    } else if (distance <= 100) {
+      distancePrice = distanceRate.tier2;
+    } else {
+      const extraDistance = Math.ceil((distance - 100) / 100); // Calculate extra distance in km
+      distancePrice = distanceRate.tier3 + extraDistance * distanceRate.tier3;
+    }
+
+    const totalPrice = basePrice + weightPrice + distancePrice;
+
+    const minimumPrice = 10000;
+
+    const finalPrice = Math.max(totalPrice, minimumPrice);
+
+    return { totalPrice: finalPrice, basePrice, weightPrice, distancePrice };
+  }
+}

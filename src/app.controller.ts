@@ -21,13 +21,13 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('test-email')
-  async sendEmail(): Promise<string> {
-    await this.queueService.addEmailJob({
-      type: 'testing',
-      to: 'testing@testing.com',
-    });
+  // @Get('test-email')
+  // async sendEmail(): Promise<string> {
+  //   await this.queueService.addEmailJob({
+  //     type: 'testing',
+  //     to: 'testing@testing.com',
+  //   });
 
-    return 'Email sent';
-  }
+  //   return 'Email sent';
+  // }
 }

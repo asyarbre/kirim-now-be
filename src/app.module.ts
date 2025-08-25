@@ -11,6 +11,8 @@ import { EmployeeBranchModule } from './employee-branch/employee-branch.module';
 import { UserAddressModule } from './user-address/user-address.module';
 import { EmailService } from 'src/common/email/email.service';
 import { QueueModule } from 'src/queue/queue.module';
+import { ShipmentsModule } from './shipments/shipments.module';
+import { XenditService } from 'src/common/xendit/xendit.service';
 
 @Module({
   imports: [
@@ -25,8 +27,9 @@ import { QueueModule } from 'src/queue/queue.module';
     EmployeeBranchModule,
     UserAddressModule,
     QueueModule,
+    ShipmentsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, EmailService],
+  providers: [AppService, EmailService, XenditService],
 })
 export class AppModule {}

@@ -6,6 +6,10 @@ import { Job } from 'bull';
 export interface EmailJobData {
   type: string;
   to: string;
+  paymentUrl: string;
+  shipmentId: string;
+  amount: number;
+  expiryDate: Date;
 }
 
 @Processor('email-queue')
@@ -23,6 +27,16 @@ export class EmailQueueProcessor {
       switch (data.type) {
         case 'testing':
           await this.emailService.sendEmail(data.to);
+          this.logger.log(`Email sent to ${data.to}`);
+          break;
+        case 'payment-notification':
+          await this.emailService.sendEmailPaymentNotification(
+            data.to,
+            data.paymentUrl,
+            data.shipmentId,
+            data.amount,
+            data.expiryDate,
+          );
           this.logger.log(`Email sent to ${data.to}`);
           break;
         default:

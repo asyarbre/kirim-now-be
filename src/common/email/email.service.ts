@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
@@ -20,7 +23,6 @@ export class EmailService {
       throw new BadRequestException('Missing required SMTP configuration');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.transporter = nodemailer.createTransport({
       host: host,
       port: port,
@@ -59,7 +61,47 @@ export class EmailService {
       html: htmlContent,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    await this.transporter.sendMail(mailOptions);
+  }
+
+  async sendEmailPaymentNotification(
+    to: string,
+    paymentUrl: string,
+    shipmentId: string,
+    amount: number,
+    expiryDate: Date,
+  ) {
+    const expiry = new Date(expiryDate);
+    const formattedExpiryDate = new Intl.DateTimeFormat('id-ID', {
+      dateStyle: 'full',
+      timeStyle: 'short',
+      timeZone: 'Asia/Jakarta',
+    }).format(expiry);
+
+    const formattedAmount = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+    }).format(amount);
+
+    const templateData = {
+      paymentUrl,
+      shipmentId,
+      amount: formattedAmount,
+      expiryDate: formattedExpiryDate,
+    };
+
+    const htmlContent = this.compileTemplate(
+      'payment-notification',
+      templateData,
+    );
+
+    const mailOptions = {
+      from: 'no-reply@asyari.web.id',
+      to,
+      subject: 'Payment Notification',
+      html: htmlContent,
+    };
+
     await this.transporter.sendMail(mailOptions);
   }
 }
