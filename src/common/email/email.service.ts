@@ -104,4 +104,33 @@ export class EmailService {
 
     await this.transporter.sendMail(mailOptions);
   }
+
+  async sendEmailPaymentSuccess(
+    to: string,
+    shipmentId: string,
+    amount: number,
+    trackingNumber: string,
+  ): Promise<void> {
+    const formattedAmount = new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+    }).format(amount);
+
+    const templateData = {
+      shipmentId,
+      amount: formattedAmount,
+      trackingNumber,
+    };
+
+    const htmlContent = this.compileTemplate('payment-success', templateData);
+
+    const mailOptions = {
+      from: 'no-reply@asyari.web.id',
+      to,
+      subject: `Payment Success - ${shipmentId}`,
+      html: htmlContent,
+    };
+
+    await this.transporter.sendMail(mailOptions);
+  }
 }

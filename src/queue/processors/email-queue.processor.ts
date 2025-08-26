@@ -6,10 +6,11 @@ import { Job } from 'bull';
 export interface EmailJobData {
   type: string;
   to: string;
-  paymentUrl: string;
-  shipmentId: string;
-  amount: number;
-  expiryDate: Date;
+  paymentUrl?: string;
+  shipmentId?: string;
+  amount?: number;
+  expiryDate?: Date;
+  trackingNumber?: string;
 }
 
 @Processor('email-queue')
@@ -30,12 +31,26 @@ export class EmailQueueProcessor {
           this.logger.log(`Email sent to ${data.to}`);
           break;
         case 'payment-notification':
+          if (!data.paymentUrl || !data.expiryDate) {
+            throw new Error(
+              'paymentUrl and expiryDate are required for payment-notification',
+            );
+          }
           await this.emailService.sendEmailPaymentNotification(
             data.to,
             data.paymentUrl,
-            data.shipmentId,
-            data.amount,
+            data.shipmentId ?? '',
+            data.amount ?? 0,
             data.expiryDate,
+          );
+          this.logger.log(`Email sent to ${data.to}`);
+          break;
+        case 'payment-success':
+          await this.emailService.sendEmailPaymentSuccess(
+            data.to,
+            data.shipmentId ?? '',
+            data.amount ?? 0,
+            data.trackingNumber ?? '',
           );
           this.logger.log(`Email sent to ${data.to}`);
           break;

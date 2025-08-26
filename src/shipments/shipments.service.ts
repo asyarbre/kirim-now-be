@@ -13,6 +13,9 @@ import { UpdateShipmentDto } from 'src/shipments/dto/update-shipment.dto';
 import * as turf from '@turf/turf';
 import { PaymentStatus } from 'src/common/enum/payment-status.enum';
 import { ConfigService } from '@nestjs/config';
+import { XenditWebhookDto } from 'src/shipments/dto/xendit-webhook.dto';
+import { QrcodeService } from 'src/common/qrcode/qrcode.service';
+import { ShipmentStatus } from 'src/common/enum/shipment-status.enum';
 
 type DeliveryType = 'same_day' | 'next_day' | 'reguler';
 
@@ -28,10 +31,11 @@ export class ShipmentsService {
 
   constructor(
     private prisma: PrismaService,
-    private queueSErvice: QueueService,
+    private queueService: QueueService,
     private openCageService: OpencageService,
     private xenditService: XenditService,
     private configService: ConfigService,
+    private qrcodeService: QrcodeService,
   ) {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     if (!frontendUrl) {
@@ -147,7 +151,7 @@ export class ShipmentsService {
     });
 
     try {
-      await this.queueSErvice.addEmailJob({
+      await this.queueService.addEmailJob({
         type: 'payment-notification',
         to: userAddress.user.email,
         shipmentId: shipment.id,
@@ -162,7 +166,7 @@ export class ShipmentsService {
     }
 
     try {
-      await this.queueSErvice.addPaymentExpiredJob(
+      await this.queueService.addPaymentExpiredJob(
         {
           paymentId: payment.id,
           shipmentId: shipment.id,
@@ -267,5 +271,96 @@ export class ShipmentsService {
     const finalPrice = Math.max(totalPrice, minimumPrice);
 
     return { totalPrice: finalPrice, basePrice, weightPrice, distancePrice };
+  }
+
+  async handlePaymentWebhook(
+    xenditWebhookDto: XenditWebhookDto,
+  ): Promise<void> {
+    const payment = await this.prisma.payment.findFirst({
+      where: {
+        externalId: xenditWebhookDto.external_id,
+      },
+      include: {
+        shipment: {
+          include: {
+            shipmentDetail: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    await this.prisma.$transaction(async prisma => {
+      await prisma.payment.update({
+        where: {
+          id: payment.id,
+        },
+        data: {
+          status: xenditWebhookDto.status,
+          paymentMethod: xenditWebhookDto.payment_method,
+        },
+      });
+
+      if (
+        xenditWebhookDto.status === 'PAID' ||
+        xenditWebhookDto.status === 'SETTLED'
+      ) {
+        const trackingNumber = `KN${xenditWebhookDto.id}`;
+        const qrCode = await this.qrcodeService.generateQrCode(trackingNumber);
+
+        await prisma.shipment.update({
+          where: {
+            id: payment.shipmentId,
+          },
+          data: {
+            trackingNumber: trackingNumber,
+            deliveryStatus: ShipmentStatus.READY_TO_PICKUP,
+            paymentStatus: xenditWebhookDto.status,
+            qrCodeImage: qrCode,
+          },
+        });
+
+        await prisma.shipmentHistory.create({
+          data: {
+            shipmentId: payment.shipmentId,
+            status: ShipmentStatus.READY_TO_PICKUP,
+            description: `Payment ${xenditWebhookDto.status} for shipment with tracking number ${trackingNumber}`,
+            userId: payment.shipment.shipmentDetail[0].user.id,
+          },
+        });
+
+        try {
+          await this.queueService.cancelPaymentExpiredJob(payment.id);
+        } catch {
+          throw new InternalServerErrorException(
+            'Failed to cancel payment expired job',
+          );
+        }
+
+        try {
+          const userEmail = payment.shipment.shipmentDetail[0].user.email;
+          if (userEmail) {
+            await this.queueService.addEmailJob({
+              type: 'payment-success',
+              to: userEmail,
+              shipmentId: payment.shipmentId,
+              amount: payment.shipment.price || xenditWebhookDto.amount,
+              trackingNumber: payment.shipment.trackingNumber || undefined,
+            });
+          }
+        } catch {
+          throw new InternalServerErrorException(
+            'Failed to send payment success email',
+          );
+        }
+      }
+    });
   }
 }
