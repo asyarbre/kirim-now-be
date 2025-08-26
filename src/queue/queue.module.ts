@@ -2,11 +2,14 @@ import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EmailService } from 'src/common/email/email.service';
+import { PrismaModule } from 'src/prisma/prisma.module';
 import { EmailQueueProcessor } from 'src/queue/processors/email-queue.processor';
+import { PaymentExpiredQueueProcessor } from 'src/queue/processors/payment-expired-queue.processor';
 import { QueueService } from 'src/queue/queue.service';
 
 @Module({
   imports: [
+    PrismaModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
@@ -21,8 +24,16 @@ import { QueueService } from 'src/queue/queue.service';
     BullModule.registerQueue({
       name: 'email-queue',
     }),
+    BullModule.registerQueue({
+      name: 'payment-expired-queue',
+    }),
   ],
-  providers: [QueueService, EmailService, EmailQueueProcessor],
+  providers: [
+    QueueService,
+    EmailService,
+    EmailQueueProcessor,
+    PaymentExpiredQueueProcessor,
+  ],
   exports: [QueueService],
 })
 export class QueueModule {}

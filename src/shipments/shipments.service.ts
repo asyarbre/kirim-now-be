@@ -161,6 +161,21 @@ export class ShipmentsService {
       );
     }
 
+    try {
+      await this.queueSErvice.addPaymentExpiredJob(
+        {
+          paymentId: payment.id,
+          shipmentId: shipment.id,
+          externalId: invoice.externalId,
+        },
+        invoice.expiryDate,
+      );
+    } catch {
+      throw new InternalServerErrorException(
+        'Failed to add payment expired job',
+      );
+    }
+
     return {
       shipment,
       payment,
