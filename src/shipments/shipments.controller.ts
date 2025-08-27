@@ -48,6 +48,13 @@ export class ShipmentsController {
     return this.shipmentsService.findAll(req.user.id);
   }
 
+  @Get('tracking/:trackingNumber')
+  findShipmentByTrackingNumber(
+    @Param('trackingNumber') trackingNumber: string,
+  ) {
+    return this.shipmentsService.findShipmentByTrackingNumber(trackingNumber);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.shipmentsService.findOne(id);

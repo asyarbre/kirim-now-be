@@ -214,6 +214,28 @@ export class ShipmentsService {
     };
   }
 
+  async findShipmentByTrackingNumber(trackingNumber: string) {
+    const shipment = await this.prisma.shipment.findFirst({
+      where: {
+        trackingNumber: trackingNumber,
+      },
+      include: {
+        shipmentDetail: true,
+        payment: true,
+        shipmentHistory: true,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found');
+    }
+
+    return {
+      message: 'Shipment fetched successfully',
+      data: shipment,
+    };
+  }
+
   async findOne(id: string) {
     const shipment = await this.prisma.shipment.findUnique({
       where: {
@@ -236,7 +258,6 @@ export class ShipmentsService {
     };
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   update(id: number, updateShipmentDto: UpdateShipmentDto) {
     return `This action updates a #${id} shipment`;
   }
