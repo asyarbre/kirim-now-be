@@ -14,6 +14,7 @@ import { QueueModule } from 'src/queue/queue.module';
 import { ShipmentsModule } from './shipments/shipments.module';
 import { XenditService } from 'src/common/xendit/xendit.service';
 import { CourierModule } from './courier/courier.module';
+import { ShipmentBranchModule } from './shipment-branch/shipment-branch.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CourierModule } from './courier/courier.module';
     QueueModule,
     ShipmentsModule,
     CourierModule,
+    ShipmentBranchModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService, XenditService],
