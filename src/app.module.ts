@@ -13,6 +13,7 @@ import { EmailService } from 'src/common/email/email.service';
 import { QueueModule } from 'src/queue/queue.module';
 import { ShipmentsModule } from './shipments/shipments.module';
 import { XenditService } from 'src/common/xendit/xendit.service';
+import { CourierModule } from './courier/courier.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { XenditService } from 'src/common/xendit/xendit.service';
     UserAddressModule,
     QueueModule,
     ShipmentsModule,
+    CourierModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService, XenditService],
