@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import { XenditWebhookDto } from 'src/shipments/dto/xendit-webhook.dto';
 import { QrcodeService } from 'src/common/qrcode/qrcode.service';
 import { ShipmentStatus } from 'src/common/enum/shipment-status.enum';
+import { PdfService, ShipmentPdfData } from 'src/common/pdf/pdf.service';
 
 type DeliveryType = 'same_day' | 'next_day' | 'reguler';
 
@@ -36,6 +37,7 @@ export class ShipmentsService {
     private xenditService: XenditService,
     private configService: ConfigService,
     private qrcodeService: QrcodeService,
+    private pdfService: PdfService,
   ) {
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     if (!frontendUrl) {
@@ -362,5 +364,59 @@ export class ShipmentsService {
         }
       }
     });
+  }
+
+  async generateShipmentPdf(shipmentId: string): Promise<Buffer> {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: {
+        id: shipmentId,
+      },
+      include: {
+        shipmentDetail: {
+          include: {
+            user: true,
+            pickupAddress: true,
+          },
+        },
+        payment: true,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException(`Shipment with ID ${shipmentId} not found`);
+    }
+
+    const shipmentDetail = shipment.shipmentDetail[0];
+    if (!shipmentDetail) {
+      throw new NotFoundException(
+        `Shipment detail with ID ${shipmentId} not found`,
+      );
+    }
+
+    const pdfData: ShipmentPdfData = {
+      trackingNumber: shipment.trackingNumber || '',
+      shipmentId: shipment.id,
+      createdAt: shipment.createdAt,
+      deliveryType: shipmentDetail.deliveryType,
+      packageType: shipmentDetail.packageType,
+      weight: shipmentDetail.weight || 0,
+      price: shipment.price || 0,
+      paymentStatus: shipment.paymentStatus,
+      distance: shipment.distance || 0,
+      basePrice: shipmentDetail.basePrice || 0,
+      weightPrice: shipmentDetail.weightPrice || 0,
+      distancePrice: shipmentDetail.distancePrice || 0,
+      deliveryStatus: shipment.deliveryStatus || '',
+      senderName: shipmentDetail.user.name,
+      senderEmail: shipmentDetail.user.email,
+      senderPhone: shipmentDetail.user.phoneNumber,
+      pickupAddress: shipmentDetail.pickupAddress.address,
+      recipientName: shipmentDetail.recipientName || '',
+      recipientPhone: shipmentDetail.recipientPhone || '',
+      destinationAddress: shipmentDetail.destinationAddress,
+      qrCodePath: shipment.qrCodeImage || '',
+    };
+
+    return this.pdfService.generateShipmentPdf(pdfData);
   }
 }

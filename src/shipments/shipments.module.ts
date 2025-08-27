@@ -10,6 +10,7 @@ import { ShipmentWebhookController } from 'src/shipments/webhook/shipment-webhoo
 import { QrcodeService } from 'src/common/qrcode/qrcode.service';
 import { QrcodeModule } from 'src/common/qrcode/qrcode.module';
 import { StorageService } from 'src/common/gcs/storage.service';
+import { PdfService } from 'src/common/pdf/pdf.service';
 
 @Module({
   imports: [PrismaModule, QueueModule, PermissionsModule, QrcodeModule],
@@ -20,6 +21,7 @@ import { StorageService } from 'src/common/gcs/storage.service';
     XenditService,
     QrcodeService,
     StorageService,
+    PdfService,
   ],
 })
 export class ShipmentsModule {}
