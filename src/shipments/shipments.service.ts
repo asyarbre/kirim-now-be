@@ -189,12 +189,51 @@ export class ShipmentsService {
     };
   }
 
-  findAll() {
-    return `This action returns all shipments`;
+  async findAll(userId: string) {
+    const shipments = await this.prisma.shipment.findMany({
+      where: {
+        shipmentDetail: {
+          some: {
+            userId: userId,
+          },
+        },
+      },
+      include: {
+        shipmentDetail: true,
+        payment: true,
+        shipmentHistory: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return {
+      message: 'Shipments fetched successfully',
+      data: shipments,
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} shipment`;
+  async findOne(id: string) {
+    const shipment = await this.prisma.shipment.findUnique({
+      where: {
+        id: id,
+      },
+      include: {
+        shipmentDetail: true,
+        payment: true,
+        shipmentHistory: true,
+      },
+    });
+
+    if (!shipment) {
+      throw new NotFoundException('Shipment not found');
+    }
+
+    return {
+      message: 'Shipment fetched successfully',
+      data: shipment,
+    };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
