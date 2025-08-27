@@ -15,6 +15,7 @@ import { ShipmentsModule } from './shipments/shipments.module';
 import { XenditService } from 'src/common/xendit/xendit.service';
 import { CourierModule } from './courier/courier.module';
 import { ShipmentBranchModule } from './shipment-branch/shipment-branch.module';
+import { HistoryModule } from './history/history.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ShipmentBranchModule } from './shipment-branch/shipment-branch.module';
     ShipmentsModule,
     CourierModule,
     ShipmentBranchModule,
+    HistoryModule,
   ],
   controllers: [AppController],
   providers: [AppService, EmailService, XenditService],
