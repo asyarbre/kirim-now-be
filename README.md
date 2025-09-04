@@ -1,98 +1,122 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Short Explanation
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Kirim Now REST API is a backend system designed for courier and logistics operations. This project was developed to further explore the use of the NestJS framework and modern backend architecture patterns, and showcases enterprise-grade features and integrations.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Key Features
 
-## Description
+1. JWT-based authentication and authorization, along with role and permission management.
+2. Implementation of an email notification system integrated with NestJS, as well as a queue system for efficient and reliable email delivery.
+3. This system will be equipped with Xendit payment gateway integration that supports various payment methods, including an auto-expired payment feature utilizing Redis queues when invoices are not paid within a specified expiration time.
+4. Shipment management, including creation, tracking, and shipment status.
+5. Management of branches, couriers, and shipment history.
+6. Creation of shipping labels in PDF format complete with QR codes.
+7. Implementation of Turf.js to calculate the distance between two coordinate points (longitude and latitude).
+8. Implementation with OpenCage to perform geocoding, which converts addresses into geographic coordinates (latitude and longitude).
+9. Implementation of Google Cloud Storage for storage media.
+10. Using Redis as a message broker to manage email queues and various background jobs.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## API Endpoints
 
-## Project setup
+List of available routes:
 
-```bash
-$ pnpm install
+**Authentication Routes**:
+
+```http
+POST /api/v1/login - User login
+POST /api/v1/register - Register new user
 ```
 
-## Compile and run the project
+**Roles Management**:
 
-```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+```http
+GET /api/v1/roles - Get list of all roles
+GET /api/v1/roles/:id - Get role details by ID
+PATCH /api/v1/roles/:id - Update role by ID
 ```
 
-## Run tests
+**Permissions Management**:
 
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+```http
+GET /api/v1/permissions - Get list of all permissions
 ```
 
-## Deployment
+**Profile Management**:
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+```http
+GET /api/v1/profile - Get current user profile
+PATCH /api/v1/profile - Update user profile
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+**Branches Management**:
 
-## Resources
+```http
+POST /api/v1/branches - Create new branch
+GET /api/v1/branches - Get list of all branches
+GET /api/v1/branches/:id - Get branch details by ID
+PATCH /api/v1/branches/:id - Update branch by ID
+DELETE /api/v1/branches/:id - Delete branch by ID
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+**Employee Branch Management**:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```http
+POST /api/v1/employee-branch - Assign employee to branch
+GET /api/v1/employee-branch - Get list of employee-branch assignments
+GET /api/v1/employee-branch/:id - Get employee-branch details by ID
+PATCH /api/v1/employee-branch/:id - Update employee-branch assignment
+DELETE /api/v1/employee-branch/:id - Remove employee from branch
+```
 
-## Support
+**User Address Management**:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```http
+POST /api/v1/user-address - Add new user address
+GET /api/v1/user-address - Get list of user addresses
+GET /api/v1/user-address/:id - Get address details by ID
+PATCH /api/v1/user-address/:id - Update user address
+DELETE /api/v1/user-address/:id - Delete user address
+```
 
-## Stay in touch
+**Shipments Management**:
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```http
+POST /api/v1/shipments - Create new shipment
+GET /api/v1/shipments/:id/pdf - Download shipment label in PDF format
+GET /api/v1/shipments - Get list of all shipments
+GET /api/v1/shipments/tracking/:trackingNumber - Track shipment by tracking number
+GET /api/v1/shipments/:id - Get shipment details by ID
+PATCH /api/v1/shipments/:id - Update shipment data
+DELETE /api/v1/shipments/:id - Delete shipment
+```
 
-## License
+**Shipment Webhook**:
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```http
+POST /api/v1/shipments/webhook - Webhook for payment notifications or status updates
+```
+
+**Courier Operations**:
+
+```http
+GET /api/v1/courier/shipments - Get list of shipments for courier
+POST /api/v1/courier/pick/:trackingNumber - Pick up package from sender
+POST /api/v1/courier/pickup/:trackingNumber - Confirm package pickup
+POST /api/v1/courier/deliver-to-branch/:trackingNumber - Deliver package to branch
+POST /api/v1/courier/pick-shipment-from-branch/:trackingNumber - Pick up package from branch
+POST /api/v1/courier/pickup-shipment-from-branch/:trackingNumber - Confirm pickup from branch
+POST /api/v1/courier/deliver-to-customer/:trackingNumber - Deliver package to customer
+```
+
+**Shipment Branch Operations**:
+
+```http
+GET /api/v1/shipment-branch/logs - Get branch activity logs
+POST /api/v1/shipment-branch/scan - Scan package QR code at branch
+```
+
+**History**:
+
+```http
+GET /api/v1/history - Get activity history
+GET /api/v1/history/:id - Get history details by ID
+```
